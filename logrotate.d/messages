@@ -1,0 +1,8 @@
+/var/log/messages {
+    rotate 5
+    daily
+    postrotate
+        /bin/killall -HUP rsyslogd
+    endscript
+}
+

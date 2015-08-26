@@ -1,0 +1,140 @@
+#!/bin/sh
+
+echo "Clear old firewall rules..."
+iptables --flush
+iptables --flush FORWARD
+iptables --flush INPUT
+iptables --flush OUTPUT
+#iptables --table nat --flush
+#iptables --table nat --delete-chain
+#iptables --table mangle --flush
+#iptables --table mangle --delete-chain
+#iptables --delete-chain
+
+echo "Drop all INPUT and FORWARD..."
+iptables -P INPUT DROP
+iptables -P FORWARD DROP
+#iptables -P OUTPUT DROP
+
+echo "Maintain established connections..."
+iptables -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+iptables -A OUTPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+
+echo "Drop all IPv6 traffic..."
+ip6tables -P INPUT DROP
+ip6tables -P OUTPUT DROP
+ip6tables -P FORWARD DROP
+
+# ICMP (Ping)
+iptables -A INPUT -p icmp -j ACCEPT
+iptables -A OUTPUT -p icmp -j ACCEPT
+
+echo "Accept everything on lo and docker0 (local network)..."
+iptables -A INPUT -i lo -p all -j ACCEPT
+iptables -A OUTPUT -o lo -p all -j ACCEPT
+iptables -A INPUT -i docker0 -p all -j ACCEPT
+iptables -A OUTPUT -o docker0 -p all -j ACCEPT
+iptables -A FORWARD -o docker0 -p all -j ACCEPT
+iptables -A FORWARD -i docker0 -p all -j ACCEPT
+
+#echo "IP Forwarding and Routing for gateway use..."
+#iptables -A FORWARD -o docker0 -i eth0 -m conntrack --ctstate NEW -j ACCEPT
+#iptables -A FORWARD -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+#iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+
+#iptables -A FORWARD -o docker0 -j REJECT --reject-with icmp-port-unreachable
+#iptables -A FORWARD -i docker0 -j REJECT --reject-with icmp-port-unreachable
+#iptables -t nat -A PREROUTING -m addrtype --dst-type LOCAL -j DOCKER
+#iptables -A OUTPUT ! -d 127.0.0.0/8 -m addrtype --dst-type LOCAL -j DOCKER
+iptables -t nat -A POSTROUTING -s 172.17.0.0/16 ! -o docker0 -j MASQUERADE
+
+iptables -t nat -A POSTROUTING -s 172.17.42.0/16 ! -d 172.17.42.0/16 -p tcp -j MASQUERADE --to-ports 1016-65535
+iptables -t nat -A POSTROUTING -s 172.17.42.0/16 ! -d 172.17.42.0/16 -p udp -j MASQUERADE --to-ports 1016-65535
+iptables -t nat -A POSTROUTING -s 172.17.42.0/16 ! -d 172.17.42.0/16 -j MASQUERADE
+iptables -A FORWARD -o docker0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+iptables -A FORWARD -i docker0 ! -o docker0 -j ACCEPT
+iptables -A FORWARD -i docker0 -o docker0 -j ACCEPT
+
+
+#OVH
+ip6tables -A INPUT -i veth3ffb7e7 -j ACCEPT
+ip6tables -A OUTPUT -o veth3ffb7e7 -j ACCEPT
+ip6tables -A INPUT -i veth609a8ef -j ACCEPT
+ip6tables -A OUTPUT -o veth609a8ef -j ACCEPT
+ip6tables -A INPUT -i vethddb0cd4 -j ACCEPT
+ip6tables -A OUTPUT -o vethddb0cd4 -j ACCEPT
+
+# ---
+
+echo "Allow ports connections to the firewall..."
+# SSH In
+iptables -A INPUT -p tcp --dport 669 -j ACCEPT
+
+# SSH Out
+iptables -A OUTPUT -p tcp --dport 669 -j ACCEPT
+
+# DNS In/Out
+iptables -A OUTPUT -p tcp --dport 53 -j ACCEPT
+iptables -A OUTPUT -p udp --dport 53 -j ACCEPT
+iptables -A INPUT -p tcp --dport 53 -j ACCEPT
+iptables -A INPUT -p udp --dport 53 -j ACCEPT
+
+# NTP Out
+iptables -A OUTPUT -p udp --dport 123 -j ACCEPT
+
+# HTTP + HTTPS Out
+iptables -A OUTPUT -p tcp --dport 80 -j ACCEPT
+iptables -A OUTPUT -p tcp --dport 443 -j ACCEPT
+
+# HTTP + HTTPS In
+iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+
+#BTSync
+iptables  -A INPUT -p tcp --dport 8888  -j ACCEPT
+iptables  -A OUTPUT -p tcp --dport 8888  -j ACCEPT
+iptables  -A INPUT -p tcp --dport 55555  -j ACCEPT
+iptables  -A OUTPUT -p tcp --dport 55555  -j ACCEPT
+
+#Syncthing
+iptables -A INPUT -p tcp --dport 8080  -j ACCEPT
+iptables -A OUTPUT -p tcp --dport 8080  -j ACCEPT
+iptables -A INPUT -p tcp --dport 22000  -j ACCEPT
+iptables -A OUTPUT -p tcp --dport 22000 -j ACCEPT
+iptables -A INPUT -p udp --dport 22000  -j ACCEPT
+iptables -A OUTPUT -p udp --dport 22000 -j ACCEPT
+
+# Mail SMTP:25
+iptables -A INPUT -p tcp --dport 25 -j ACCEPT
+iptables -A OUTPUT -p tcp --dport 25 -j ACCEPT
+
+# Mail SMTPS:465
+iptables -A INPUT -p tcp --dport 465 -j ACCEPT
+iptables -A OUTPUT -p tcp --dport 465 -j ACCEPT
+
+# Mail IMAP:993
+iptables -A INPUT -p tcp --dport 993 -j ACCEPT
+iptables -A OUTPUT -p tcp --dport 993 -j ACCEPT
+
+# XMPP
+iptables -A INPUT -p tcp --dport 5222  -j ACCEPT
+iptables -A OUTPUT -p tcp --dport 5222 -j ACCEPT
+iptables -A INPUT -p tcp --dport 5269 -j ACCEPT
+iptables -A OUTPUT -p tcp --dport 5269 -j ACCEPT
+iptables -A INPUT -p tcp --dport 5290 -j ACCEPT
+iptables -A OUTPUT -p tcp --dport 5290 -j ACCEPT
+
+#Mumbler 
+iptables -A INPUT -p tcp --dport 64738 -j ACCEPT
+iptables -A OUTPUT -p tcp --dport 64738 -j ACCEPT
+iptables -A INPUT -p udp --dport 64738 -j ACCEPT
+iptables -A OUTPUT -p udp --dport 64738 -j ACCEPT
+
+#FSync
+iptables -A INPUT -p tcp --dport 5000 -j ACCEPT
+iptables -A OUTPUT -p tcp --dport 5000 -j ACCEPT
+
+#Dockerui
+iptables -A INPUT -p tcp --dport 9000 -j ACCEPT
+iptables -A OUTPUT -p tcp --dport 9000 -j ACCEPT
+
