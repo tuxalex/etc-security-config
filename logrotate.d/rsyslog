@@ -7,18 +7,27 @@
 	delaycompress
 	compress
 	postrotate
-		invoke-rc.d rsyslog rotate > /dev/null
+		reload rsyslog >/dev/null 2>&1 || true
 	endscript
 }
 
-/var/log/firewalld.log
-/var/log/maillog
-/var/log/boot.log
+/var/log/mail.info
+/var/log/mail.warn
+/var/log/mail.err
+/var/log/mail.log
 /var/log/daemon.log
 /var/log/kern.log
 /var/log/auth.log
+/var/log/user.log
+/var/log/lpr.log
 /var/log/cron.log
+/var/log/debug
 /var/log/messages
+/var/log/firewalld.log
+/var/log/maillog
+/var/log/boot.log
+#/var/log/secure
+#/var/log/spooler
 {
 	rotate 4
 	weekly
@@ -28,6 +37,6 @@
 	delaycompress
 	sharedscripts
 	postrotate
-		invoke-rc.d rsyslog rotate > /dev/null
+		reload rsyslog >/dev/null 2>&1 || true
 	endscript
 }
