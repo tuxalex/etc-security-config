@@ -1,0 +1,14 @@
+#!/bin/sh
+
+
+PSAD=/usr/sbin/psad
+FWSNORT=/usr/sbin/fwsnort
+MAIL=root@tuxcloud.fr
+
+test -x $PSAD || exit 0
+test -x $FWSNORT || exit 0
+
+$PSAD --sig-update
+$FWSNORT --update-rules
+/var/lib/fwsnort/fwsnort.sh
+$PSAD -H | mail -s "psad and fwsnort signatures updated" $MAIL  # Weekly update of psad signatures
