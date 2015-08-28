@@ -22,7 +22,7 @@
 /var/log/lpr.log
 /var/log/cron.log
 /var/log/debug
-/var/log/messages
+#/var/log/messages
 /var/log/firewalld.log
 /var/log/maillog
 /var/log/boot.log

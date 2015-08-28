@@ -1,0 +1,4 @@
+set ask askcc append dot save crt
+set sendmail="/usr/bin/msmtp"
+ignore Received Message-Id Resent-Message-Id Status Mail-From Return-Path Via Delivered-To
+#alias root root@tuxcloud.fr

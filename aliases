@@ -1,0 +1,5 @@
+# See man 5 aliases for format
+postmaster:root@tuxcloud.fr
+root:root@tuxcloud.fr
+cron:root@tuxcloud.fr
+default:root@tuxcloud.fr
